@@ -2,39 +2,48 @@ import { Text, Line } from '@react-three/drei';
 import { useFrame, useThree } from '@react-three/fiber';
 import { useController } from '@react-three/xr';
 import React, { FC, useEffect, useRef, useState } from 'react';
-import { Group, Mesh, Object3D, Vector3 } from 'three';
+import { Group, Object3D, Vector3 } from 'three';
 
-const scaleFactor = 0.002;
-const scale = new Vector3(scaleFactor, scaleFactor, scaleFactor);
+const textColor = '#ffffff';
+const lineColor = '#dddddd';
 
 // eslint-disable-next-line no-shadow
 export enum ControllerButton {
-  A = 'A',
-  B = 'B',
-  Trigger = 'Trigger',
+  A,
+  B,
+  System,
+  RightTrigger,
+  RightGrip,
 }
 
+const ButtonHandedness = {
+  [ControllerButton.A]: 'right',
+  [ControllerButton.B]: 'right',
+  [ControllerButton.System]: 'right',
+  [ControllerButton.RightTrigger]: 'right',
+  [ControllerButton.RightGrip]: 'right',
+};
+
 const ButtonPosition = {
-  [ControllerButton.A]: new Vector3(-0.015730699198866646, 0.006583851335810607, -0.03431766005455645),
-  [ControllerButton.B]: new Vector3(-0.022470246709102748, -0.002786519587520228, -0.04484441926477035),
-  [ControllerButton.Trigger]: new Vector3(-0.010930707493265038, -0.03131088808592811, -0.04490346267948289),
+  // [ControllerButton.A]: new Vector3(-0.015730699198866646, 0.006583851335810607, -0.03431766005455645),
+  // [ControllerButton.B]: new Vector3(-0.022470246709102748, -0.002786519587520228, -0.04484441926477035),
+  // [ControllerButton.RightTrigger]: new Vector3(-0.010930707493265038, -0.03131088808592811, -0.04490346267948289),
+  [ControllerButton.A]: new Vector3(-0.004640465159155566, 0.008481654354815146, -0.01650656339905309),
+  [ControllerButton.B]: new Vector3(-0.012062527982649495, -0.0008618575737104842, -0.02609458097061644),
+  [ControllerButton.System]: new Vector3(0.014356727899876933, 0.010303275762782959, -0.013255750395561185),
+  [ControllerButton.RightTrigger]: new Vector3(-0.004150597499489348, -0.03371376586774956, -0.027690306858668613),
+  [ControllerButton.RightGrip]: new Vector3(-0.008524726268349585, -0.0074061690630879105, 0.01339096756780581),
 };
 
 export interface ControllerButtonLabelProps {
-  handedness: XRHandedness;
   button: ControllerButton;
   label: string;
   lineLength?: number;
 }
 
-export const ControllerButtonLabel: FC<ControllerButtonLabelProps> = ({
-  handedness,
-  button,
-  label,
-  lineLength = 0.1,
-}) => {
+export const ControllerButtonLabel: FC<ControllerButtonLabelProps> = ({ button, label, lineLength = 0.08 }) => {
   const { camera } = useThree();
-  const controller = useController(handedness);
+  const controller = useController(ButtonHandedness[button] as XRHandedness);
   const [lineEndPoint, setLineEndPoint] = useState(new Vector3());
   const [textPosition, setTextPosition] = useState(new Vector3());
 
@@ -43,6 +52,7 @@ export const ControllerButtonLabel: FC<ControllerButtonLabelProps> = ({
 
   useEffect(() => {
     if (controller && groupRef.current) {
+      console.log(controller.inputSource.profiles);
       const parent = controller.children[1].children[0];
       parent.add(groupRef.current);
 
@@ -54,21 +64,18 @@ export const ControllerButtonLabel: FC<ControllerButtonLabelProps> = ({
   }, [controller]);
 
   useFrame(() => {
-    if (textRef.current) {
+    if (controller && textRef.current) {
       (textRef.current as unknown as Object3D).lookAt(camera.position);
     }
   });
 
+  if (!controller) return null;
+
   return (
     <group ref={groupRef}>
-      <mesh position={ButtonPosition[button]} scale={scale}>
-        <sphereGeometry args={[1, 32, 16]} />
-        <meshBasicMaterial color="yellow" />
-      </mesh>
+      <Line points={[[0, 0, 0], lineEndPoint]} color={lineColor} linewidth={2} />
 
-      <Line points={[[0, 0, 0], lineEndPoint]} color="black" linewidth={2} />
-
-      <Text ref={textRef} position={textPosition} color="black" fontSize={0.01} anchorX="center" anchorY="middle">
+      <Text ref={textRef} position={textPosition} color={textColor} fontSize={0.01} anchorX="center" anchorY="middle">
         {label}
       </Text>
     </group>
