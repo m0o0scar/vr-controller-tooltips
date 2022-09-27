@@ -1,6 +1,6 @@
+import react from '@vitejs/plugin-react';
 import { dirname } from 'path';
 import { defineConfig } from 'vite';
-import react from '@vitejs/plugin-react';
 
 export default defineConfig(async () => {
   // Sharing an environment file across your Mono-Repo | by Josh Dando | Medium
@@ -15,6 +15,10 @@ export default defineConfig(async () => {
     envDir,
 
     plugins: [react()],
+
+    server: {
+      https: true,
+    },
 
     optimizeDeps: {
       include: ['react/jsx-runtime'],
